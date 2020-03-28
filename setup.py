@@ -1,17 +1,39 @@
-from setuptools import setup
+import os
 
-setup(
-    name='exabyte_json_include',
-    version='2.0.0',
+import setuptools
+
+from json_include import (
+    __version__,
+    __author__
+)
+
+
+def read(fname):
+   return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+setuptools.setup(
+    name='krozark-json-include',
+    version=__version__,
     description='An extension for json_include to support file inclusion',
-    url='https://github.com/Exabyte-io/json_include',
-    author='Exabyte Inc.',
-    author_email='info@exabyte.io',
-    py_modules=["json_include"],
+    long_description=read('README.rst'),
+    long_description_content_type="text/rst",
+    license="MIT License",
+    author=__author__,
+    author_email='maxime@maxime-barbier.fr',
+    url='https://github.com/Krozark/json_include',
+    keywords="json include",
+    packages=setuptools.find_packages(),
     classifiers=[
         'Programming Language :: Python',
-        'Development Status :: 3 - Alpha',
+        "Programming Language :: Python :: 3",
         'Intended Audience :: Developers',
         'Topic :: Software Development'
-    ]
+        "Operating System :: OS Independent",
+    ],
+    entry_points={
+        "console_scripts": [
+            "json-build = json_include.__main__:main"
+        ]
+    },
+    python_requires='>=3.6',
 )

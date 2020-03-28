@@ -92,7 +92,7 @@ Installation
 
 ::
 
-    pip install https://github.com/exabyte-io/json_include/archive/master.zip
+    pip install krozark-json-include
 
 Usage
 ~~~~~
@@ -100,5 +100,11 @@ Usage
 .. code-block:: python
 
     import json_include
+    json_include.build_json('example.json')
     json_include.build_json(ROOT_DIR, 'example.json')
 
+
+.. code-block:: shell
+
+    json-build test/source/c.json
+    python -m json_include test/source/c.json

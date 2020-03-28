@@ -1,9 +1,9 @@
-import os
-import re
 import json
+import os
 import random
+import re
 import string
-
+import sys
 from collections import OrderedDict
 
 OBJECT_TYPES = (dict, list)
@@ -35,7 +35,7 @@ class JSONInclude(object):
         if not isinstance(regex_list, list):
             # passing single regex only
             regex = regex_list
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 rv = regex.search(value)
                 if rv:
                     return rv.groups()[0]
@@ -43,7 +43,7 @@ class JSONInclude(object):
         else:
             # passing list of regex`s
             for idx, regex in enumerate(regex_list):
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     rv = regex.search(value)
                     if rv:
                         return rv.groups(), idx
@@ -59,7 +59,7 @@ class JSONInclude(object):
         Walk through the dict and add random string to the value at key
         and all other occurrences of the same value.
         """
-        if key in obj and isinstance(obj[key], basestring):
+        if key in obj and isinstance(obj[key], str):
             original = obj[key]
             replacement = obj[key] + "-" + self._random_string()
             obj[key] = replacement
@@ -118,7 +118,7 @@ class JSONInclude(object):
                     if not isinstance(_data, dict): _data = {include_key: _data}
                     o.update(self._make_unique(_data, make_unique_key) if make_unique_key else _data)
             include_text_keys = [key for key in o.keys()
-                                 if isinstance(o[key], basestring) and INCLUDE_TEXT_PATTERN.search(o[key])]
+                                 if isinstance(o[key], str) and INCLUDE_TEXT_PATTERN.search(o[key])]
             for key in include_text_keys:
                 include_filename = self._get_include_name(o[key], INCLUDE_TEXT_PATTERN)
                 if include_filename:
@@ -127,7 +127,7 @@ class JSONInclude(object):
                         o[key] = file.read()
             if is_include_exp:
                 return
-            for k, v in o.iteritems():
+            for k, v in o.items():
                 if isinstance(v, OBJECT_TYPES):
                     self._walk_through_to_include(v, dirpath)
         elif isinstance(o, list):
@@ -146,7 +146,7 @@ class JSONInclude(object):
 
         return d
 
-    def build_json_include(self, dirpath, filename, indent=4):
+    def build_json_include(self, dirpath, filename=None, indent=4):
         """Parse a json file and build it by the include expression recursively.
 
         :param str dirpath: The directory path of source json files.
@@ -233,6 +233,8 @@ class JSONInclude(object):
             obj = json_data
         return obj
 
-
-def build_json(dirpath, filename, indent=4):
-    return JSONInclude().build_json_include(dirpath, filename, indent)
+def build_json(dirpath, filename=None, indent=4):
+    if filename is None:
+        dirpath = os.path.abspath(os.path.join(os.getcwd(), dirpath))
+        dirpath, filename = os.path.split(dirpath)
+    return JSONInclude().build_json_include(dirpath, filename, indent=indent)
