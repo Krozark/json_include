@@ -84,7 +84,8 @@ class JSONInclude(object):
 
     def _cleanup_before_inclusion(self, data):
         if isinstance(data, list):
-            for item in data: self._cleanup_before_inclusion(item)
+            for item in data:
+                self._cleanup_before_inclusion(item)
             return
         data.pop('$schema', None)  # remove $schema property before inclusion
 
@@ -114,10 +115,10 @@ class JSONInclude(object):
                     o.pop(include_key)
                     _data = self._included_cache[include_name]
                     # add data under include_key if it is not a dictionary
-                    if not isinstance(_data, dict): _data = {include_key: _data}
+                    if not isinstance(_data, dict):
+                        _data = {include_key: _data}
                     o.update(self._make_unique(_data, make_unique_key) if make_unique_key else _data)
-            include_text_keys = [key for key in o.keys()
-                                 if isinstance(o[key], str) and INCLUDE_TEXT_PATTERN.search(o[key])]
+            include_text_keys = [key for key in o.keys() if isinstance(o[key], str) and INCLUDE_TEXT_PATTERN.search(o[key])]
             for key in include_text_keys:
                 include_filename = self._get_include_name(o[key], INCLUDE_TEXT_PATTERN)
                 if include_filename:
@@ -142,7 +143,6 @@ class JSONInclude(object):
 
         self._walk_through_to_include(d, dirpath)
         self._original_schemas.pop()
-
         return d
 
     def build_json_include(self, dirpath, filename=None, indent=4):
