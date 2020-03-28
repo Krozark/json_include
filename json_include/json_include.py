@@ -92,8 +92,8 @@ class JSONInclude(object):
         if isinstance(o, dict):
             is_include_exp = False
             make_unique_key = o.pop('makeUnique', None)
-            if INCLUDE_KEYS[0] in o or INCLUDE_KEYS[1] in o:
-                include_key = INCLUDE_KEYS[0] if INCLUDE_KEYS[0] in o else INCLUDE_KEYS[1]
+            if any(map(lambda x: x in o, INCLUDE_KEYS)):
+                include_key = [y for y in map(lambda x: x if x in o else None, INCLUDE_KEYS) if y][0]
                 include_info, include_idx = self._get_include_name(o[include_key], INCLUDE_VALUE_PATTERNS)
                 if include_info:
                     is_include_exp = True
