@@ -3,7 +3,6 @@ import os
 import random
 import re
 import string
-import sys
 from collections import OrderedDict
 
 OBJECT_TYPES = (dict, list)
@@ -233,8 +232,14 @@ class JSONInclude(object):
             obj = json_data
         return obj
 
-def build_json(dirpath, filename=None, indent=4):
+
+def build_str(dirpath, filename=None, indent=4):
     if filename is None:
         dirpath = os.path.abspath(os.path.join(os.getcwd(), dirpath))
         dirpath, filename = os.path.split(dirpath)
     return JSONInclude().build_json_include(dirpath, filename, indent=indent)
+
+
+def build_json(*args, **kwargs):
+    str_data = build_str(*args, **kwargs)
+    return json.loads(str_data)

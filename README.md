@@ -99,6 +99,8 @@ pip install krozark-json-include
 import json_include
 json_include.build_json('example.json')
 json_include.build_json(ROOT_DIR, 'example.json')
+json_include.build_str('example.json')
+json_include.build_str(ROOT_DIR, 'example.json')
 ```
 
 ``` shell
