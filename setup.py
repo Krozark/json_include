@@ -15,8 +15,8 @@ setuptools.setup(
     name='krozark-json-include',
     version=__version__,
     description='An extension for json_include to support file inclusion',
-    long_description=read('README.rst'),
-    long_description_content_type="text/rst",
+    long_description=read('README.md'),
+    long_description_content_type="text/markdown",
     license="MIT License",
     author=__author__,
     author_email='maxime@maxime-barbier.fr',
@@ -27,7 +27,7 @@ setuptools.setup(
         'Programming Language :: Python',
         "Programming Language :: Python :: 3",
         'Intended Audience :: Developers',
-        'Topic :: Software Development'
+        'Topic :: Software Development',
         "Operating System :: OS Independent",
     ],
     entry_points={
