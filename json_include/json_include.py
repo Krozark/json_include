@@ -13,8 +13,9 @@ INCLUDE_VALUE_PATTERNS = [
     re.compile(r'^file:(.+)?#/(.+)$'),  # remote definition inclusion
     re.compile(r'^file:(.+)$'),  # remote file inclusion
     re.compile(r'^(.+)?#/(.+)$'),  # remote definition inclusion without `file:` pattern
-    re.compile(r'^(.+)$'),  # remote file inclusion without `file:` pattern (must be the last one)
 ]
+INCLUDE_INDEX_LOCAL = [0]
+INCLUDE_INDEX_DEFINITION = [2, 4]
 INCLUDE_TEXT_PATTERN = re.compile(r'^include_text\((.+)\)$')
 
 
@@ -24,21 +25,19 @@ class JSONInclude(object):
         self._original_schemas = None
 
     def _random_string(self, length=9):
-        return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
+        return ''.join(
+            random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length)
+        )
 
-    def _read_file(self, filePath):
+    @staticmethod
+    def _read_file(filePath):
         with open(filePath) as f:
             return f.read()
 
     def _get_include_name(self, value, regex_list):
         if not isinstance(regex_list, list):
             # passing single regex only
-            regex = regex_list
-            if isinstance(value, str):
-                rv = regex.search(value)
-                if rv:
-                    return rv.groups()[0]
-            return None
+            return self._get_include_name([value], regex_list)[0]
         else:
             # passing list of regex`s
             for idx, regex in enumerate(regex_list):
@@ -87,23 +86,27 @@ class JSONInclude(object):
             for item in data:
                 self._cleanup_before_inclusion(item)
             return
-        data.pop('$schema', None)  # remove $schema property before inclusion
+        elif isinstance(data, dict):
+            data.pop('$schema', None)  # remove $schema property before inclusion
 
     def _walk_through_to_include(self, o, dirpath):
         if isinstance(o, dict):
             is_include_exp = False
             make_unique_key = o.pop('makeUnique', None)
+            # if a key match a INCLUDE_KEYS
             if any(map(lambda x: x in o, INCLUDE_KEYS)):
-                include_key = [y for y in map(lambda x: x if x in o else None, INCLUDE_KEYS) if y][0]
+                include_key = [y for y in map(lambda x: x if x in o else None, INCLUDE_KEYS) if y][0]  # get key that match
                 include_info, include_idx = self._get_include_name(o[include_key], INCLUDE_VALUE_PATTERNS)
                 if include_info:
                     is_include_exp = True
                     include_name = include_info[0]
-                    if include_idx == 0:
+                    if include_idx in INCLUDE_INDEX_LOCAL:
                         # include local definitions
-                        self._included_cache[include_name] = self._include_definition(include_name,
-                                                                                      self._original_schemas[-1])
-                    elif include_idx in [2, 4]:
+                        self._included_cache[include_name] = self._include_definition(
+                            include_name,
+                            self._original_schemas[-1]
+                        )
+                    elif include_idx in INCLUDE_INDEX_DEFINITION:
                         # include remote definitions
                         include_name = include_info[1]
                         remote_file_schema = self._include_remote_file(dirpath, include_info[0])
@@ -111,36 +114,44 @@ class JSONInclude(object):
                     else:
                         # enable relative directory references: `../../`
                         self._included_cache[include_name] = self._include_remote_file(dirpath, include_name)
+                    # remove "key : include-pattern" from dict
 
-                    o.pop(include_key)
                     _data = self._included_cache[include_name]
+                    o.pop(include_key)
                     # add data under include_key if it is not a dictionary
                     if not isinstance(_data, dict):
                         _data = {include_key: _data}
-                    o.update(self._make_unique(_data, make_unique_key) if make_unique_key else _data)
-            include_text_keys = [key for key in o.keys() if isinstance(o[key], str) and INCLUDE_TEXT_PATTERN.search(o[key])]
-            for key in include_text_keys:
-                include_filename = self._get_include_name(o[key], INCLUDE_TEXT_PATTERN)
-                if include_filename:
-                    _f = os.path.join(dirpath, include_filename)
-                    with open(os.path.join(_f)) as file:
-                        o[key] = file.read()
+                    if make_unique_key:
+                        o.update(self._make_unique(_data, make_unique_key))
+                    else:
+                        o.update(_data)
+
+            if isinstance(0, dict):
+                # if a key match INCLUDE_TEXT_PATTERN
+                include_text_keys = [key for key in o.keys() if isinstance(o[key], str) and INCLUDE_TEXT_PATTERN.search(o[key])]
+                for key in include_text_keys:
+                    include_filename = self._get_include_name(o[key], INCLUDE_TEXT_PATTERN)
+                    if include_filename:
+                        _f = os.path.join(dirpath, include_filename)
+                        o[key] = self._read_file(os.path.join(_f))
+
             if is_include_exp:
+                # don't recurse
                 return
+
+        if isinstance(o, dict):
             for k, v in o.items():
-                if isinstance(v, OBJECT_TYPES):
-                    self._walk_through_to_include(v, dirpath)
+                self._walk_through_to_include(v, dirpath)
         elif isinstance(o, list):
             for i in o:
-                if isinstance(i, OBJECT_TYPES):
-                    self._walk_through_to_include(i, dirpath)
+                self._walk_through_to_include(i, dirpath)
 
     def _parse_json_include(self, dirpath, filename):
         filepath = os.path.join(dirpath, filename)
         json_str = self._read_file(filepath)
         d = self._resolve_extend_replace(json_str, filepath)
-        self._original_schemas.append(d)
 
+        self._original_schemas.append(d)
         self._walk_through_to_include(d, dirpath)
         self._original_schemas.pop()
         return d
@@ -158,29 +169,6 @@ class JSONInclude(object):
         d = self._parse_json_include(dirpath, filename)
         return json.dumps(d, indent=indent, separators=(',', ': '))
 
-    def _build_json_include_to_files(self, dirpath, filenames, target_dirpath, indent=4):
-        """Build a list of source json files and write the built result into
-        target directory path with the same file name they have.
-
-        Since all the included JSON will be cached in the parsing process,
-        this function will be a better way to handle multiple files than build each
-        file seperately.
-
-        :param str dirpath: The directory path of source json files.
-        :param list filenames: A list of source json files.
-        :param str target_dirpath: The directory path you want to put built result into.
-        :rtype: None
-        """
-        assert isinstance(filenames, list), '`filenames must be a list`'
-
-        if not os.path.exists(target_dirpath):
-            os.makedirs(target_dirpath)
-
-        for i in filenames:
-            json = self.build_json_include(dirpath, i, indent)
-            target_filepath = os.path.join(target_dirpath, i)
-            with open(target_filepath, 'w') as f:
-                f.write(json)
 
     def _resolve_extend_replace(self, str, filepath):
         """

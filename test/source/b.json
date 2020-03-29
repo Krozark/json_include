@@ -1,9 +1,9 @@
 {
-    "aa": {
-        "...": "a-0.json"
+    "b0:a0": {
+        "...": "include(a-0.json)"
     },
-    "b0": {
-        "value": "a b0 value"
+    "b1": {
+        "value": "a b1 value"
     },
-    "b1": true
+    "b2": true
 }
