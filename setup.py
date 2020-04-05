@@ -19,7 +19,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     license="MIT License",
     author=__author__,
-    author_email='maxime@maxime-barbier.fr',
+    author_email='maxime.barbier1991+json-include@gmail.com',
     url='https://github.com/Krozark/json_include',
     keywords="json include",
     packages=setuptools.find_packages(),
