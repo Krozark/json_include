@@ -1,0 +1,15 @@
+{
+    "message": "hello world",
+    "sub-level": {
+        "CHECK_OS": {
+            "linux": {
+                "os": "linux",
+                "console": true
+            },
+            "android": {
+                "os": "android",
+                "console": true
+            }
+        }
+    }
+}

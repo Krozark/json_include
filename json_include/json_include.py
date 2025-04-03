@@ -215,7 +215,7 @@ class JSONInclude(object):
                 data.update(value)
 
             for key in data:
-                data[key] = self.parse_vars(data[key])
+                data[key] = self.parse_vars(data[key], **vars)
 
         return data
 

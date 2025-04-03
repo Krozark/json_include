@@ -1,0 +1,7 @@
+{
+    "message": "hello world",
+    "sub-level": {
+        "os": "linux",
+        "console": true
+    }
+}
