@@ -1,0 +1,13 @@
+{
+    "message": "hello world",
+    "CHECK_OS": {
+        "linux": {
+            "os": "linux",
+            "console": true
+        },
+        "android": {
+            "os": "android",
+            "console": true
+        }
+    }
+}

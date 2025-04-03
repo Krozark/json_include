@@ -156,7 +156,7 @@ class JSONInclude(object):
         self._original_schemas.pop()
         return d
 
-    def build_json_include(self, dirpath, filename=None, indent=4):
+    def build_json_include(self, dirpath, filename=None):
         """Parse a json file and build it by the include expression recursively.
 
         :param str dirpath: The directory path of source json files.
@@ -166,8 +166,58 @@ class JSONInclude(object):
         """
         self._included_cache = {}
         self._original_schemas = []
-        d = self._parse_json_include(dirpath, filename)
-        return json.dumps(d, indent=indent, separators=(',', ': '))
+        return self._parse_json_include(dirpath, filename)
+
+    def parse_vars(self, data, **vars):
+        """
+        Change the structure of data to select branch to use.
+
+        data = {
+            "message": "hello world",
+            "CHECK_OS": {
+                "linux": {
+                    "os": "linux",
+                    "console": True,
+                },
+                "android": {
+                    "os": "android",
+                    "console": False,
+                }
+            }
+        }
+        result = pars_vars(data,CHECK_OS="linux")
+        print(result)
+        {
+            "message: "hello world",
+            "os": "linux",
+            "console": True,
+        }
+
+        the value of all key CHECK_OS are removed, and the sub data corresponding of its value is added in place.
+
+        :param data: the dict to update
+        :param vars: the vars to use
+        :return: data modified
+        """
+        if isinstance(data, dict):
+            for var_key in list(data.keys()):
+                # check if the key is in vars, and get its value
+                key_to_use = vars.get(var_key, None)
+                if not key_to_use:
+                    continue
+
+                # here we have a "switch" to build depending on the value of var_to_use
+                all_values = data.pop(var_key)
+                value = all_values.get(key_to_use)
+                if not value:
+                    continue
+                # add new data
+                data.update(value)
+
+            for key in data:
+                data[key] = self.parse_vars(data[key])
+
+        return data
 
 
     def _resolve_extend_replace(self, str, filepath):
@@ -186,6 +236,7 @@ class JSONInclude(object):
                     },
                     "with": "$this.units"
                 },
+
 
         :param str str: json string with file content
         :param str filepath: path to the file
@@ -221,13 +272,21 @@ class JSONInclude(object):
         return obj
 
 
-def build_str(dirpath, filename=None, indent=4):
+def build_json(dirpath, filename, **kwargs):
     if filename is None:
         dirpath = os.path.abspath(os.path.join(os.getcwd(), dirpath))
         dirpath, filename = os.path.split(dirpath)
-    return JSONInclude().build_json_include(dirpath, filename, indent=indent)
+
+    jsoninc = JSONInclude()
+    data = jsoninc.build_json_include(dirpath, filename)
+    if vars:
+        data = jsoninc.parse_vars(data, **kwargs)
+    return data
 
 
-def build_json(*args, **kwargs):
-    str_data = build_str(*args, **kwargs)
-    return json.loads(str_data)
+def build_str(dirpath, filename, *, indent=4, **kwargs):
+    d = build_json(dirpath, filename, **kwargs)
+    return json.dumps(d, indent=indent, separators=(',', ': '))
+
+
+

@@ -20,7 +20,7 @@ def get_files(dirpath):
 
 def run_build_json_include(dirpath, i):
     print("Process file %s/%s" % (dirpath, i))
-    rv_1 = build_str(dirpath, i)
+    rv_1 = build_str(dirpath, i, CHECK_OS="linux")
     with open(os.path.join(_path('expect'), i)) as f:
         expect = f.read()
     print(rv_1)
