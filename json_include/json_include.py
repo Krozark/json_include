@@ -32,7 +32,18 @@ class JSONInclude(object):
     @staticmethod
     def _read_file(filePath):
         with open(filePath) as f:
-            return f.read()
+            data = f.read()
+            return JSONInclude.read_content_without_comments(data)
+
+    @staticmethod
+    def read_content_without_comments(file_content):
+        useful_lines = []
+        for line in file_content.splitlines():
+            # Split at the first '//' and trim whitespace
+            content = line.split('//', 1)[0].strip()
+            if content:  # Add only if the line is not empty
+                useful_lines.append(content)
+        return "\n".join(useful_lines)
 
     def _get_include_name(self, value, regex_list):
         if not isinstance(regex_list, list):
@@ -272,7 +283,7 @@ class JSONInclude(object):
         return obj
 
 
-def build_json(dirpath, filename, **kwargs):
+def build_json(dirpath, filename=None, **kwargs):
     if filename is None:
         dirpath = os.path.abspath(os.path.join(os.getcwd(), dirpath))
         dirpath, filename = os.path.split(dirpath)
@@ -284,8 +295,8 @@ def build_json(dirpath, filename, **kwargs):
     return data
 
 
-def build_str(dirpath, filename, *, indent=4, **kwargs):
-    d = build_json(dirpath, filename, **kwargs)
+def build_str(dirpath, filename=None, indent=4, **kwargs):
+    d = build_json(dirpath, filename=filename, **kwargs)
     return json.dumps(d, indent=indent, separators=(',', ': '))
 
 

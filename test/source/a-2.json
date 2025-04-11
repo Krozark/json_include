@@ -1,0 +1,6 @@
+{
+    "a0": 1,
+    "a1": "one",
+    // this is a comment
+    "a2": "two" // this is another comment
+}
