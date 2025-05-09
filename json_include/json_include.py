@@ -137,15 +137,6 @@ class JSONInclude(object):
                     else:
                         o.update(_data)
 
-            if isinstance(0, dict):
-                # if a key match INCLUDE_TEXT_PATTERN
-                include_text_keys = [key for key in o.keys() if isinstance(o[key], str) and INCLUDE_TEXT_PATTERN.search(o[key])]
-                for key in include_text_keys:
-                    include_filename = self._get_include_name(o[key], INCLUDE_TEXT_PATTERN)
-                    if include_filename:
-                        _f = os.path.join(dirpath, include_filename)
-                        o[key] = self._read_file(os.path.join(_f))
-
             if is_include_exp:
                 # don't recurse
                 return
@@ -218,15 +209,19 @@ class JSONInclude(object):
                     continue
 
                 # here we have a "switch" to build depending on the value of var_to_use
-                all_values = data.pop(var_key)
-                value = all_values.get(key_to_use)
-                if not value:
-                    continue
-                # add new data
-                data.update(value)
+                value = data.get(var_key)
+                if isinstance(value, dict):
+                    all_values = data.pop(var_key)
+                    value = all_values.get(key_to_use)
+                    if not value:
+                        continue
+                    # add new data
+                    data.update(value)
 
             for key in data:
                 data[key] = self.parse_vars(data[key], **vars)
+        elif isinstance(data, str):
+            data = data.format(**vars)
 
         return data
 

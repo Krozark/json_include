@@ -1,0 +1,15 @@
+{
+    "a0": {
+      "...": "include(a-0.json)"
+    },
+    "a1": {
+    "...": "include(a-1.json)"
+    },
+    "a2": {
+        "...": "include(a-2.json)"
+    },
+    "a3": {
+        "...": "include(a-3.json)"
+    }
+
+}
