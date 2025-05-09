@@ -290,7 +290,7 @@ def build_json(dirpath, filename=None, **kwargs):
 
     jsoninc = JSONInclude()
     data = jsoninc.build_json_include(dirpath, filename)
-    if vars:
+    if kwargs:
         data = jsoninc.parse_vars(data, **kwargs)
     return data
 
